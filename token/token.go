@@ -25,6 +25,8 @@ const (
 	SLASH    = "SLASH"    // /
 	LT       = "LT"       // AKA less than, <
 	GT       = "GT"       // AKA greater than, >
+	EQ       = "EQ"       // ==
+	NOTEQ    = "NOTEQ"    // !=
 
 	// Delimiters
 	COMMA     = "COMMA"     // ,
