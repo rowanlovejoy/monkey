@@ -37,18 +37,28 @@ const (
 	// Keywords
 	FUNCTION = "FUNCTION" // fn
 	LET      = "LET"      // let
+	TRUE     = "TRUE"     // true
+	FALSE    = "FALSE"    // false
+	IF       = "IF"       // if
+	ELSE     = "ELSE"     // else
+	RETURN   = "RETURN"   // return
 )
 
 var keywords = map[string]TokenType{
-	"fn":  FUNCTION,
-	"let": LET,
+	"fn":     FUNCTION,
+	"let":    LET,
+	"true":   TRUE,
+	"false":  FALSE,
+	"if":     IF,
+	"else":   ELSE,
+	"return": RETURN,
 }
 
 func New(tokenType TokenType, ch byte) Token {
 	return Token{Type: tokenType, Literal: string(ch)}
 }
 
-// Get the token type matching the specified identifier
+// Get the keyword token corresponding to a multi-char literal
 func LookupIdent(ident string) TokenType {
 	if tok, ok := keywords[ident]; ok {
 		return tok
