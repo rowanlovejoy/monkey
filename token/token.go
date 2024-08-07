@@ -17,8 +17,14 @@ const (
 	INT   = "INT"   // E.g., 3, 5
 
 	// Operators
-	ASSIGN = "ASSIGN" // =
-	PLUS   = "PLUS"   // +
+	ASSIGN   = "ASSIGN"   // =
+	PLUS     = "PLUS"     // +
+	MINUS    = "MINUS"    // -
+	BANG     = "BANG"     // !
+	ASTERISK = "ASTERISK" // *
+	SLASH    = "SLASH"    // /
+	LT       = "LT"       // AKA less than, <
+	GT       = "GT"       // AKA greater than, >
 
 	// Delimiters
 	COMMA     = "COMMA"     // ,
