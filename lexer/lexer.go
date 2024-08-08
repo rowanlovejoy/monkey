@@ -24,23 +24,18 @@ func (l *Lexer) NextToken() token.Token {
 
 	switch l.ch {
 	case '=':
-		if nextCh := l.peekChar(); nextCh == '=' {
-			literal := string(l.ch) + string(nextCh)
+		if literal, ok := l.makeTwoCharLiteral('='); ok {
 			tok = token.Token{Type: token.EQ, Literal: literal}
-			l.readChar()
 		} else {
 			tok = token.New(token.ASSIGN, l.ch)
 		}
 	case '+':
 		tok = token.New(token.PLUS, l.ch)
 	case '-':
-
 		tok = token.New(token.MINUS, l.ch)
 	case '!':
-		if nextCh := l.peekChar(); nextCh == '=' {
-			literal := string(l.ch) + string(nextCh)
+		if literal, ok := l.makeTwoCharLiteral('='); ok {
 			tok = token.Token{Type: token.NOTEQ, Literal: literal}
-			l.readChar()
 		} else {
 			tok = token.New(token.BANG, l.ch)
 		}
@@ -84,6 +79,17 @@ func (l *Lexer) NextToken() token.Token {
 
 	l.readChar()
 	return tok
+}
+
+// Attempt to construct a two char literal from current and next char, advancing lexer if successful
+func (l *Lexer) makeTwoCharLiteral(expected byte) (string, bool) {
+	if nextCh := l.peekChar(); nextCh == expected {
+		literal := string(l.ch) + string(nextCh)
+		l.readChar()
+		return literal, true
+	} else {
+		return "", false
+	}
 }
 
 func (l *Lexer) skipWhitespace() {
