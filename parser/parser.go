@@ -1,20 +1,25 @@
 package parser
 
 import (
+	"fmt"
 	"rowanlovejoy/monkey/ast"
 	"rowanlovejoy/monkey/lexer"
 	"rowanlovejoy/monkey/token"
 )
 
 type Parser struct {
-	l *lexer.Lexer
+	lexer *lexer.Lexer
 	// Analogous to Lexer's position and readPosition but store tokens instead of chars
 	currToken token.Token // Current token under examination
 	peekToken token.Token // Next token in the sequence, can give context to current token when parsing
+	errors    []string    // Error messages generated while parsing
 }
 
 func New(l *lexer.Lexer) *Parser {
-	p := &Parser{l: l}
+	p := &Parser{
+		lexer:  l,
+		errors: []string{},
+	}
 
 	// Read two tokens so that currToken and peekToken are both initialised
 	p.nextToken() // Initialises peekToken
@@ -23,10 +28,19 @@ func New(l *lexer.Lexer) *Parser {
 	return p
 }
 
+func (p *Parser) Errors() []string {
+	return p.errors
+}
+
+func (p *Parser) peekError(t token.TokenType) {
+	message := fmt.Sprintf("Unexpected next token. Expected next token to be %s; got %s", t, p.peekToken.Type)
+	p.errors = append(p.errors, message)
+}
+
 // Advances the parser through the token sequence
 func (p *Parser) nextToken() {
 	p.currToken = p.peekToken
-	p.peekToken = p.l.NextToken()
+	p.peekToken = p.lexer.NextToken()
 }
 
 func (p *Parser) ParseProgram() *ast.Program {
@@ -34,7 +48,9 @@ func (p *Parser) ParseProgram() *ast.Program {
 		Statements: []ast.Statement{},
 	}
 
-	for p.currToken.Type != token.EOF {
+	for !p.currTokenIs(token.EOF) {
+		// nil here indicates an unknown token type, not an error during parsing
+		// maybe this could be replaced with a dedicated struct to be more descriptive
 		if statement := p.parseStatement(); statement != nil {
 			program.Statements = append(program.Statements, statement)
 		}
@@ -62,9 +78,13 @@ func (p *Parser) parseLetStatement() *ast.LetStatement {
 		return nil
 	}
 
-	statement.Name = &ast.Identifier{
+	statement.Name = ast.Identifier{
 		Token: p.currToken,
 		Value: p.currToken.Literal,
+	}
+
+	if !p.expectPeek(token.ASSIGN) {
+		return nil
 	}
 
 	// TODO: Skip over expressions for now
@@ -85,12 +105,14 @@ func (p *Parser) peekTokenIs(t token.TokenType) bool {
 	return p.peekToken.Type == t
 }
 
-// Asserts the next token and advances the parser if true
+// Asserts the next token and advances the parser if the assertion is true.
+// Instead logs an error if the assertion is false.
 func (p *Parser) expectPeek(t token.TokenType) bool {
 	if p.peekTokenIs(t) {
 		p.nextToken()
 		return true
 	} else {
+		p.peekError(t)
 		return false
 	}
 }

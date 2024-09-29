@@ -32,16 +32,19 @@ func (p *Program) TokenLiteral() string {
 	} else {
 		return ""
 	}
-}
+} // Satisfies Node interface
 
 type LetStatement struct {
 	Token token.Token // token.LET
-	Name  *Identifier // Identifier being bound to
+	Name  Identifier  // Identifier being bound to
 	Value Expression  // Expression returning the value to be bound
 }
 
 func (ls *LetStatement) statementNode() {} // Satisfies Statement interface
 func (ls *LetStatement) TokenLiteral() string {
+	if ls == nil {
+		return "<nil>"
+	}
 	return ls.Token.Literal
 } // Satisfies Node interface
 
@@ -53,5 +56,8 @@ type Identifier struct {
 
 func (i *Identifier) expressionNode() {} // Satisfies Expression interface. Identifiers are expressions because in some cases they *can* produce values, e.g., when binding one variable to another, i.e., let second_identifier = first_identifier;
 func (i *Identifier) TokenLiteral() string {
+	if i == nil {
+		return "<nil>"
+	}
 	return i.Token.Literal
 } // Satisfies Node interface
