@@ -38,6 +38,35 @@ func TestLetStatements(t *testing.T) {
 	}
 }
 
+func TestReturnStatements(t *testing.T) {
+	input := `
+		return 5;
+		return 10;
+		return 993322;
+	`
+	expectedNumStatements := 3
+
+	parser := New(lexer.New(input))
+
+	program := parser.ParseProgram()
+	checkParserErrors(t, parser)
+
+	if numStatements := len(program.Statements); numStatements != expectedNumStatements {
+		t.Fatalf("Unexpected statement count. Expected %d statement(s); got %d", expectedNumStatements, numStatements)
+	}
+
+	for _, statement := range program.Statements {
+		returnStatement, ok := statement.(*ast.ReturnStatement)
+		if !ok {
+			t.Errorf("Unexpected statement type. Expected *ast.ReturnStatement; got %T", returnStatement)
+			continue
+		}
+		if literal := returnStatement.TokenLiteral(); literal != "return" {
+			t.Errorf("Unexpected return statement token literal. Expected \"return\". Got %q", literal)
+		}
+	}
+}
+
 func testLetStatement(t *testing.T, statement ast.Statement, identifier string) bool {
 	if statement.TokenLiteral() != "let" {
 		t.Errorf("Unexpected token literal. Expected \"let\". Got %q", statement.TokenLiteral())

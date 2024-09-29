@@ -2,6 +2,9 @@ package ast
 
 import "rowanlovejoy/monkey/token"
 
+// String returned when calling TokenLiteral on a nil receiver
+const NIL_TOKEN_LITERAL = "<nil>"
+
 type Node interface {
 	TokenLiteral() string
 }
@@ -43,10 +46,23 @@ type LetStatement struct {
 func (ls *LetStatement) statementNode() {} // Satisfies Statement interface
 func (ls *LetStatement) TokenLiteral() string {
 	if ls == nil {
-		return "<nil>"
+		return NIL_TOKEN_LITERAL
 	}
 	return ls.Token.Literal
 } // Satisfies Node interface
+
+type ReturnStatement struct {
+	Token       token.Token // token.RETURN
+	ReturnValue Expression  // Expression returning the value to return
+}
+
+func (rs *ReturnStatement) statementNode() {}
+func (rs *ReturnStatement) TokenLiteral() string {
+	if rs == nil {
+		return NIL_TOKEN_LITERAL
+	}
+	return rs.Token.Literal
+}
 
 // A name to which a value has been bound
 type Identifier struct {
@@ -57,7 +73,7 @@ type Identifier struct {
 func (i *Identifier) expressionNode() {} // Satisfies Expression interface. Identifiers are expressions because in some cases they *can* produce values, e.g., when binding one variable to another, i.e., let second_identifier = first_identifier;
 func (i *Identifier) TokenLiteral() string {
 	if i == nil {
-		return "<nil>"
+		return NIL_TOKEN_LITERAL
 	}
 	return i.Token.Literal
 } // Satisfies Node interface
