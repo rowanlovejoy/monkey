@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"fmt"
 	"rowanlovejoy/monkey/ast"
 	"rowanlovejoy/monkey/lexer"
 	"testing"
@@ -12,16 +13,12 @@ func TestLetStatements(t *testing.T) {
 		let y = 10;
 		let foobar = 838383;
 	`
-	expectedNumStatements := 3
-
 	parser := New(lexer.New(input))
 
 	program := parser.ParseProgram()
-	checkParserErrors(t, parser)
 
-	if numStatements := len(program.Statements); numStatements != expectedNumStatements {
-		t.Fatalf("Unexpected statement count. Expected %d statements. Got %d", expectedNumStatements, numStatements)
-	}
+	checkParserErrors(t, parser)
+	checkStatementCount(t, program, 3)
 
 	tests := []struct {
 		expectedIdentifier string
@@ -44,16 +41,12 @@ func TestReturnStatements(t *testing.T) {
 		return 10;
 		return 993322;
 	`
-	expectedNumStatements := 3
-
 	parser := New(lexer.New(input))
 
 	program := parser.ParseProgram()
-	checkParserErrors(t, parser)
 
-	if numStatements := len(program.Statements); numStatements != expectedNumStatements {
-		t.Fatalf("Unexpected statement count. Expected %d statement(s); got %d", expectedNumStatements, numStatements)
-	}
+	checkParserErrors(t, parser)
+	checkStatementCount(t, program, 3)
 
 	for _, statement := range program.Statements {
 		returnStatement, ok := statement.(*ast.ReturnStatement)
@@ -74,12 +67,9 @@ func TestIdentifierExpression(t *testing.T) {
 
 	parser := New(lexer.New(input))
 	program := parser.ParseProgram()
-	checkParserErrors(t, parser)
 
-	expectedNumStatements := 1
-	if numStatements := len(program.Statements); numStatements != expectedNumStatements {
-		t.Fatalf("Unexpected statement count. Expected %d statement(s); got %d", expectedNumStatements, numStatements)
-	}
+	checkParserErrors(t, parser)
+	checkStatementCount(t, program, 1)
 
 	statement, ok := program.Statements[0].(*ast.ExpressionStatement)
 	if !ok {
@@ -108,12 +98,9 @@ func TestIntegerLiteralExpression(t *testing.T) {
 	`
 	parser := New(lexer.New(input))
 	program := parser.ParseProgram()
-	checkParserErrors(t, parser)
 
-	expectedNumStatements := 1
-	if numStatements := len(program.Statements); numStatements != expectedNumStatements {
-		t.Fatalf("Unexpected statement count. Expected %d statement(s); got %d", expectedNumStatements, numStatements)
-	}
+	checkParserErrors(t, parser)
+	checkStatementCount(t, program, 1)
 
 	statement, ok := program.Statements[0].(*ast.ExpressionStatement)
 	if !ok {
@@ -133,6 +120,43 @@ func TestIntegerLiteralExpression(t *testing.T) {
 	expectedTokenLiteral := "5"
 	if literal := integerLiteral.TokenLiteral(); literal != expectedTokenLiteral {
 		t.Errorf("Unexpected token literal. Expected %q; got %q", expectedTokenLiteral, literal)
+	}
+}
+
+func TestParsingPrefixExpressions(t *testing.T) {
+	prefixTests := []struct {
+		input        string
+		operator     string
+		integerValue int64
+	}{
+		{"!5", "!", 5},
+		{"-15", "-", 15},
+	}
+
+	for _, test := range prefixTests {
+		parser := New(lexer.New(test.input))
+		program := parser.ParseProgram()
+
+		checkParserErrors(t, parser)
+		checkStatementCount(t, program, 1)
+
+		statement, ok := program.Statements[0].(*ast.ExpressionStatement)
+		if !ok {
+			t.Fatalf("Unexpected statement type. Expected *ast.ExpressionStatement; got %T", program.Statements[0])
+		}
+
+		prefixExpression, ok := statement.Expression.(*ast.PrefixExpression)
+		if !ok {
+			t.Fatalf("Unexpected expression type. Expected *ast.PrefixExpression; got %T", statement.Expression)
+		}
+
+		if operator := prefixExpression.Operator; operator != test.operator {
+			t.Fatalf("Unexpected operator. Expected %q; got %q", test.operator, operator)
+		}
+
+		if !testIntegerLiteral(t, prefixExpression.Right, test.integerValue) {
+			return
+		}
 	}
 }
 
@@ -161,6 +185,26 @@ func testLetStatement(t *testing.T, statement ast.Statement, identifier string) 
 	return true
 }
 
+func testIntegerLiteral(t *testing.T, il ast.Expression, value int64) bool {
+	integerLiteral, ok := il.(*ast.IntegerLiteral)
+	if !ok {
+		t.Errorf("Unexpected expression type. Expected *ast.IntegerLiteral; got %T", il)
+		return false
+	}
+
+	if literalValue := integerLiteral.Value; literalValue != value {
+		t.Errorf("Unexpected literal value. Expected %d; got %d", value, literalValue)
+		return false
+	}
+
+	if tokenLiteral := integerLiteral.TokenLiteral(); tokenLiteral != fmt.Sprintf("%d", value) {
+		t.Errorf("Unexpected token literal. Expected %d; got %q", value, tokenLiteral)
+		return false
+	}
+
+	return true
+}
+
 func checkParserErrors(t *testing.T, p *Parser) {
 	errors := p.Errors()
 
@@ -175,4 +219,10 @@ func checkParserErrors(t *testing.T, p *Parser) {
 	}
 
 	t.FailNow()
+}
+
+func checkStatementCount(t *testing.T, program *ast.Program, expectedCount int) {
+	if numStatements := len(program.Statements); numStatements != expectedCount {
+		t.Fatalf("Unexpected statement count. Expected %d statement(s); got %d", expectedCount, numStatements)
+	}
 }
