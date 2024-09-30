@@ -80,7 +80,7 @@ func (p *Parser) parseLetStatement() *ast.LetStatement {
 		return nil
 	}
 
-	statement.Name = ast.Identifier{
+	statement.Name = &ast.Identifier{
 		Token: p.currToken,
 		Value: p.currToken.Literal,
 	}
