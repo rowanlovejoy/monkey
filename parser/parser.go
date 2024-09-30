@@ -5,6 +5,7 @@ import (
 	"rowanlovejoy/monkey/ast"
 	"rowanlovejoy/monkey/lexer"
 	"rowanlovejoy/monkey/token"
+	"strconv"
 )
 
 const (
@@ -42,6 +43,7 @@ func New(l *lexer.Lexer) *Parser {
 	}
 
 	p.registerPrefix(token.IDENT, p.parseIdentifier)
+	p.registerPrefix(token.INT, p.parseIntegerLiteral)
 
 	// Read two tokens so that currToken and peekToken are both initialised
 	p.nextToken() // Initialises peekToken
@@ -79,11 +81,10 @@ func (p *Parser) ParseProgram() *ast.Program {
 	}
 
 	for !p.currTokenIs(token.EOF) {
-		// nil here indicates an unknown token type, not an error during parsing
-		// maybe this could be replaced with a dedicated struct to be more descriptive
-		if statement := p.parseStatement(); statement != nil {
-			program.Statements = append(program.Statements, statement)
-		}
+		statement := p.parseStatement()
+
+		program.Statements = append(program.Statements, statement)
+
 		p.nextToken()
 	}
 
@@ -172,6 +173,23 @@ func (p *Parser) parseIdentifier() ast.Expression {
 		Token: p.currToken,
 		Value: p.currToken.Literal,
 	}
+}
+
+func (p *Parser) parseIntegerLiteral() ast.Expression {
+	literal := &ast.IntegerLiteral{
+		Token: p.currToken,
+	}
+
+	value, err := strconv.ParseInt(p.currToken.Literal, 0, 64)
+	if err != nil {
+		message := fmt.Sprintf("Failed to parse %q as integer", p.currToken.Literal)
+		p.errors = append(p.errors, message)
+		return nil
+	}
+
+	literal.Value = value
+
+	return literal
 }
 
 // Compare type of current token to expected

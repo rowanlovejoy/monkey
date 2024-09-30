@@ -145,3 +145,22 @@ func (i *Identifier) TokenLiteral() string {
 func (i *Identifier) String() string {
 	return i.Value
 } // Satisfies Node interface
+
+type IntegerLiteral struct {
+	Token token.Token
+	Value int64
+}
+
+func (il *IntegerLiteral) expressionNode() {} // Satisfies Expression interface
+func (il *IntegerLiteral) TokenLiteral() string {
+	if il == nil {
+		return NIL_TOKEN_LITERAL
+	}
+	return il.Token.Literal
+} // Satisfies Node interface
+func (il *IntegerLiteral) String() string {
+	if il == nil {
+		return NIL_TOKEN_LITERAL
+	}
+	return il.Token.Literal
+} // Satisfies Node interface
