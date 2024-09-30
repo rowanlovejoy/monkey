@@ -67,6 +67,41 @@ func TestReturnStatements(t *testing.T) {
 	}
 }
 
+func TestIdentifierExpression(t *testing.T) {
+	input := `
+		foobar;
+	`
+
+	parser := New(lexer.New(input))
+	program := parser.ParseProgram()
+	checkParserErrors(t, parser)
+
+	expectedNumStatements := 1
+	if numStatements := len(program.Statements); numStatements != expectedNumStatements {
+		t.Fatalf("Unexpected statement count. Expected %d statement(s); got %d", expectedNumStatements, numStatements)
+	}
+
+	statement, ok := program.Statements[0].(*ast.ExpressionStatement)
+	if !ok {
+		t.Fatalf("Unexpected statement type. Expected *ast.ExpressionStatement; got %T", program.Statements[0])
+	}
+
+	identifier, ok := statement.Expression.(*ast.Identifier)
+	if !ok {
+		t.Fatalf("Unexpected expression type. Expected *ast.Identifier; got %T", statement.Expression)
+	}
+
+	expectedIdentifier := "foobar"
+	if value := identifier.Value; value != expectedIdentifier {
+		t.Errorf("Unexpected identifier value. Expected %q; got %q", expectedIdentifier, value)
+	}
+
+	expectedTokenLiteral := "foobar"
+	if literal := identifier.TokenLiteral(); literal != expectedTokenLiteral {
+		t.Errorf("Unexpected token literal. Expected %q; got %q", expectedTokenLiteral, literal)
+	}
+}
+
 func testLetStatement(t *testing.T, statement ast.Statement, identifier string) bool {
 	if statement.TokenLiteral() != "let" {
 		t.Errorf("Unexpected token literal. Expected \"let\". Got %q", statement.TokenLiteral())
