@@ -166,7 +166,7 @@ func (il *IntegerLiteral) String() string {
 } // Satisfies Node interface
 
 type PrefixExpression struct {
-	Token    token.Token // Prefix token, e.g., !, -
+	Token    token.Token // Prefix operator token, e.g., !, -
 	Operator string      // ! or -
 	Right    Expression  // Expression to operator's right, its operand
 }
@@ -184,6 +184,32 @@ func (pe *PrefixExpression) String() string {
 	out.WriteString("(")
 	out.WriteString(pe.Operator)
 	out.WriteString(pe.Right.String())
+	out.WriteString(")")
+
+	return out.String()
+}
+
+type InfixExpression struct {
+	Token    token.Token // Infix operator token, e.g, +, *
+	Left     Expression
+	Operator string
+	Right    Expression
+}
+
+func (ie *InfixExpression) expressionNode() {}
+func (ie *InfixExpression) TokenLiteral() string {
+	if ie == nil {
+		return NIL_TOKEN_LITERAL
+	}
+	return ie.Token.Literal
+}
+func (ie *InfixExpression) String() string {
+	var out bytes.Buffer
+
+	out.WriteString("(")
+	out.WriteString(ie.Left.String())
+	out.WriteString(" " + ie.Operator + " ")
+	out.WriteString(ie.Right.String())
 	out.WriteString(")")
 
 	return out.String()

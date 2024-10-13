@@ -160,6 +160,116 @@ func TestParsingPrefixExpressions(t *testing.T) {
 	}
 }
 
+func TestParsingInfixExpressions(t *testing.T) {
+	infixTests := []struct {
+		input      string
+		leftValue  int64
+		operator   string
+		rightValue int64
+	}{
+		{"5 + 5", 5, "+", 5},
+		{"5 - 5", 5, "-", 5},
+		{"5 * 5", 5, "*", 5},
+		{"5 / 5", 5, "/", 5},
+		{"5 > 5", 5, ">", 5},
+		{"5 < 5", 5, "<", 5},
+		{"5 == 5", 5, "==", 5},
+		{"5 != 5", 5, "!=", 5},
+	}
+
+	for _, test := range infixTests {
+		parser := New(lexer.New(test.input))
+		program := parser.ParseProgram()
+
+		checkParserErrors(t, parser)
+		checkStatementCount(t, program, 1)
+
+		statement, ok := program.Statements[0].(*ast.ExpressionStatement)
+		if !ok {
+			t.Fatalf("Unexpected statement type. Expected *ast.ExpressionStatement; got %T", program.Statements[0])
+		}
+
+		infixExpression, ok := statement.Expression.(*ast.InfixExpression)
+		if !ok {
+			t.Fatalf("Unexpected expression type. Expected *ast.InfixExpression; got %T", statement.Expression)
+		}
+
+		if !testIntegerLiteral(t, infixExpression.Left, test.leftValue) {
+			return
+		}
+
+		if infixExpression.Operator != test.operator {
+			t.Fatalf("Unexpected infix expression operator. Expected %q; got %q", test.operator, infixExpression.Operator)
+		}
+
+		if !testIntegerLiteral(t, infixExpression.Right, test.rightValue) {
+			return
+		}
+	}
+}
+
+func TestOperatorPrecedenceParsing(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{
+			"-a * b",
+			"((-a) * b)",
+		},
+		{
+			"!-a",
+			"(!(-a))",
+		},
+		{
+			"a + b + c",
+			"((a + b) + c)",
+		},
+		{
+			"a * b * c",
+			"((a * b) * c)",
+		},
+		{
+			"a * b / c",
+			"((a * b) / c)",
+		},
+		{
+			"a + b / c",
+			"(a + (b / c))",
+		},
+		{
+			"a + b * c + d / e -f",
+			"(((a + (b * c)) + (d / e)) - f)",
+		},
+		{
+			"3 + 4; -5 * 5",
+			"(3 + 4)((-5) * 5)",
+		},
+		{
+			"5 > 4 == 3 < 4",
+			"((5 > 4) == (3 < 4))",
+		},
+		{
+			"5 < 4 != 3 > 4",
+			"((5 < 4) != (3 > 4))",
+		},
+		{
+			"3 + 4 * 5 == 3 * 1 + 4 * 5",
+			"((3 + (4 * 5)) == ((3 * 1) + (4 * 5)))",
+		},
+	}
+
+	for _, test := range tests {
+		parser := New(lexer.New(test.input))
+		program := parser.ParseProgram()
+		checkParserErrors(t, parser)
+
+		if actual := program.String(); actual != test.expected {
+			t.Errorf("Unexpected string output. Expected %q; got %q", test.expected, actual)
+		}
+	}
+}
+
 func testLetStatement(t *testing.T, statement ast.Statement, identifier string) bool {
 	if statement.TokenLiteral() != "let" {
 		t.Errorf("Unexpected token literal. Expected \"let\". Got %q", statement.TokenLiteral())
